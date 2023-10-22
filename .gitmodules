@@ -1,0 +1,9 @@
+[submodule "lua"]
+	path = lua
+	url = https://github.com/lua/lua.git
+[submodule "luke"]
+	path = luke
+	url = https://github.com/alinarezrangel/luke.git
+[submodule "luaposix"]
+	path = luaposix
+	url = https://github.com/alinarezrangel/luaposix.git
