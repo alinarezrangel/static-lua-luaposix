@@ -3,7 +3,7 @@
 	url = https://github.com/lua/lua.git
 [submodule "luke"]
 	path = luke
-	url = https://github.com/alinarezrangel/luke.git
+	url = git@github.com:alinarezrangel/luke.git
 [submodule "luaposix"]
 	path = luaposix
-	url = https://github.com/alinarezrangel/luaposix.git
+	url = git@github.com:alinarezrangel/luaposix.git
