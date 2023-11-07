@@ -5,6 +5,9 @@ BUNDLE_TRIM_PATHS = outs/luaposix/lua/
 AR = ar rvc
 RANLIB = ranlib
 
+.PHONY: all
+all: outs/bundle
+
 outs/liblua.a: lua/liblua.a
 	cp $< $@
 
