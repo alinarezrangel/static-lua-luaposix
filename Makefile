@@ -9,9 +9,11 @@ RANLIB = ranlib
 all: outs/bundle
 
 outs/liblua.a: lua/liblua.a
+	mkdir -p outs
 	cp $< $@
 
 outs/lua: lua/lua
+	mkdir -p outs
 	cp $< $@
 
 lua/liblua.a: lua/makefile
@@ -21,9 +23,11 @@ lua/lua: lua/makefile
 	$(MAKE) -C lua lua
 
 outs/luacfg: outs/lua lua/makefile scripts/try-update.sh
+	mkdir -p outs
 	$(MAKE) -C lua echo | scripts/try-update.sh $@
 
 outs/luke: luke/build-aux/luke
+	mkdir -p outs
 	awk -v LUA=$P/outs/lua 'BEGIN{ f=1 } !f { print } f { f=0; print "#!" LUA }' $< > $@
 	chmod +x $@
 
@@ -31,11 +35,12 @@ luke/build-aux/luke: outs/lua
 	$(MAKE) -C luke LUA=$P/outs/lua build-aux/luke
 
 outs/build-luaposix: outs/luke outs/luacfg outs/lua scripts/invoke-luke.lua
+	mkdir -p outs
 	outs/lua scripts/invoke-luke.lua $P outs/luacfg | xargs -0 -- sh -c 'cd luaposix && ../outs/luke "$$@"'
 	touch $@
 
 outs/luaposix/%: outs/build-luaposix outs/luke
-	mkdir -p outs/luaposix/lib/ outs/luaposix/lua/
+	mkdir -p outs outs/luaposix/lib/ outs/luaposix/lua/
 	export orig=$P; outs/lua scripts/invoke-luke.lua $P outs/luacfg | xargs -0 -- sh -c 'cd luaposix && $$orig/outs/luke install "$$@"'
 
 # Do not edit this variable: it was generated automatically from running `lr -t
@@ -63,20 +68,26 @@ outs/luaposix/lua/posix/init.lua outs/luaposix/lua/posix/sys.lua			\
 outs/luaposix/lua/posix/util.lua outs/luaposix/lua/posix/version.lua
 
 outs/install-luaposix: $(LUAPOSIX_OUT_OFILES) $(LUAPOSIX_OUT_LFILES)
+	mkdir -p outs
 	touch $@
 
 outs/libluaposix.a: $(LUAPOSIX_OUT_OFILES)
+	mkdir -p outs
 	$(AR) $@ $^
 	$(RANLIB) $@
 
 outs/bundled_lua_modules: outs/lua bundled/make_bundled_data.lua $(LUAPOSIX_OUT_LFILES)
+	mkdir -p outs
 	outs/lua bundled/make_bundled_data.lua $@ $(BUNDLE_TRIM_PATHS) $(LUAPOSIX_OUT_LFILES)
 
 outs/bundled_lua_modules.c: outs/bundled_lua_modules
+	mkdir -p outs
 	xxd -i $< > $@
 
 outs/bundled_lua_modules.o: outs/bundled_lua_modules.c
+	mkdir -p outs
 	$(CC) -c $< -o $@
 
 outs/bundle: bundled/main.c outs/liblua.a outs/libluaposix.a outs/bundled_lua_modules.o
+	mkdir -p outs
 	$(CC) -Ilua/ -DLUA_USE_READLINE bundled/main.c -Louts -llua -lluaposix -lm -ldl -lcrypt -lreadline outs/bundled_lua_modules.o -o $@
