@@ -11,6 +11,7 @@
 
 
 #define BUNDLED_COPYRIGHT "bundled-lua Copyright (C) 2023 Alejandro Linarez Rangel"
+#define LUAPOSIX_COPYRIGHT "luaposix Copyright (C) 2006-2023 luaposix authors"
 
 
 extern int luaopen_posix_ctype(lua_State* L);
@@ -466,6 +467,8 @@ static void print_version (void) {
     lua_writestring(LUA_COPYRIGHT, strlen(LUA_COPYRIGHT));
     lua_writeline();
     lua_writestring(BUNDLED_COPYRIGHT, strlen(BUNDLED_COPYRIGHT));
+    lua_writeline();
+    lua_writestring(LUAPOSIX_COPYRIGHT, strlen(LUAPOSIX_COPYRIGHT));
     lua_writeline();
 }
 
