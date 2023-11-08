@@ -10,8 +10,14 @@
 #include "lualib.h"
 
 
-#define BUNDLED_COPYRIGHT "bundled-lua Copyright (C) 2023 Alejandro Linarez Rangel"
-#define LUAPOSIX_COPYRIGHT "luaposix Copyright (C) 2006-2023 luaposix authors"
+// You can define the macro BUNDLED_MAIN_LUA_FILE to a string. If you do, the
+// string must be the name of a module that will be executed as the entry point
+// of the program. When this feature is enabled, the resulting program does no
+// command-line argument parsing, does not include a generated REPL, etc.
+
+
+#define BUNDLED_COPYRIGHT "bundled-lua  Copyright (C) 2023 Alejandro Linarez Rangel"
+#define LUAPOSIX_COPYRIGHT "luaposix  Copyright (C) 2006-2023 luaposix authors"
 
 
 extern int luaopen_posix_ctype(lua_State* L);
@@ -327,6 +333,7 @@ static void fill_state_with_initless(lua_State* L)
     // [acc]
     lua_pop(L, 1);
 }
+
 
 // The mayority of the following program was taken almost verbatim from
 // `lua/lua.c`, which is Lua stand-alone interpreter. The reason for copying it
@@ -930,6 +937,35 @@ static int pmain (lua_State *L) {
     return 1;
 }
 
+#if defined(BUNDLED_MAIN_LUA_FILE)
+/*
+** Main body of the bundled main module (to be called in protected mode).
+** Requires the main module while setting a few important global variables.
+*/
+static int bmain (lua_State *L) {
+    int argc = (int)lua_tointeger(L, 1);
+    char **argv = (char **)lua_touserdata(L, 2);
+    luaL_checkversion(L);
+    luaL_openlibs(L);  /* open standard libraries */
+    make_index();
+    fill_state_with_luaposix(L);
+    fill_state_with_bundled(L);
+    fill_state_with_initless(L);
+    createargtable (L, argv, argc, 0);  /* Create the `arg` table but without negative indexes. */
+    lua_gc(L, LUA_GCRESTART);  /* start GC... */
+    lua_gc(L, LUA_GCGEN, 0, 0);  /* ...in generational mode */
+    lua_getglobal(L, "require");
+    lua_pushstring(L, BUNDLED_MAIN_LUA_FILE);
+    lua_call(L, 1, 0);
+    lua_pushboolean(L, 1);  /* signal no errors */
+    return 1;
+}
+
+#define ENTRYPOINT &bmain
+#else
+#define ENTRYPOINT &pmain
+#endif
+
 int main (int argc, char **argv) {
     int status, result;
     lua_State *L = luaL_newstate();  /* create state */
@@ -938,7 +974,7 @@ int main (int argc, char **argv) {
         return EXIT_FAILURE;
     }
     lua_gc(L, LUA_GCSTOP);  /* stop GC while building state */
-    lua_pushcfunction(L, &pmain);  /* to call 'pmain' in protected mode */
+    lua_pushcfunction(L, ENTRYPOINT);  /* to call 'pmain' or 'bmain' in protected mode */
     lua_pushinteger(L, argc);  /* 1st argument */
     lua_pushlightuserdata(L, argv); /* 2nd argument */
     status = lua_pcall(L, 2, 1, 0);  /* do the call */
