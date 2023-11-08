@@ -1,6 +1,16 @@
 P = `pwd`
 
-BUNDLE_TRIM_PATHS = outs/luaposix/lua/
+# You can customize the variables BUNDLE_EXTRA_TRIM_PATHS and
+# BUNDLE_EXTRA_LUA_FILES when invoking the makefile (`make
+# BUNDLE_EXTRA_TRIM_PATHS=... BUNDLE_EXTRA_LUA_FILES=...`) to manually add more
+# files to the bundled interpreter. This way you can use this project to create
+# your own bundled Lua libraries!
+#
+# You can also add your own C libraries to the bundle by customizing the
+# variables CFLAGS, LIBFLAG, LDFLAGS and LIBS. For example: `make
+# LDFLAGS=-L/my/dir/ LIBS=-lmylib`.
+
+BUNDLE_TRIM_PATHS = outs/luaposix/lua/:$(BUNDLE_EXTRA_TRIM_PATHS)
 
 AR = ar rvc
 RANLIB = ranlib
@@ -76,9 +86,9 @@ outs/libluaposix.a: $(LUAPOSIX_OUT_OFILES)
 	$(AR) $@ $^
 	$(RANLIB) $@
 
-outs/bundled_lua_modules: outs/lua bundled/make_bundled_data.lua $(LUAPOSIX_OUT_LFILES)
+outs/bundled_lua_modules: outs/lua bundled/make_bundled_data.lua $(LUAPOSIX_OUT_LFILES) $(BUNDLE_EXTRA_LUA_FILES)
 	mkdir -p outs
-	outs/lua bundled/make_bundled_data.lua $@ $(BUNDLE_TRIM_PATHS) $(LUAPOSIX_OUT_LFILES)
+	outs/lua bundled/make_bundled_data.lua $@ $(BUNDLE_TRIM_PATHS) $(LUAPOSIX_OUT_LFILES) $(BUNDLE_EXTRA_LUA_FILES)
 
 outs/bundled_lua_modules.c: outs/bundled_lua_modules
 	mkdir -p outs
@@ -90,4 +100,4 @@ outs/bundled_lua_modules.o: outs/bundled_lua_modules.c
 
 outs/bundle: bundled/main.c outs/liblua.a outs/libluaposix.a outs/bundled_lua_modules.o
 	mkdir -p outs
-	$(CC) -Ilua/ -DLUA_USE_READLINE bundled/main.c -Louts -llua -lluaposix -lm -ldl -lcrypt -lreadline outs/bundled_lua_modules.o -o $@
+	$(CC) $(CFLAGS) $(LIBFLAG) -Ilua/ -DLUA_USE_READLINE bundled/main.c $(LDFLAGS) -Louts -llua -lluaposix -lm -ldl -lcrypt -lreadline outs/bundled_lua_modules.o $(LIBS) -o $@

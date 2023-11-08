@@ -8,7 +8,10 @@ OUTPUT_FILE is the name of the file to write. Existing data will be destroyed.
 
 PREFIXES is a single argument that consists of a series of : separated "path
 segments". Each segment will be stripped from the input files before generating
-their Lua's module name.
+their Lua's module name. Empty segments will be ignored: this is so that naive
+shell composition via variables (like `export
+PREFIXES="$PREFIXES:/another/prefix/"`) works. If multiple prefixes match a
+path, only the longest prefix will be stripped.
 
 FILES is 0 or more files that will be bundled. The name of each file is
 converted to a Lua module name by removing the ".lua" or ".luac" extension (if
@@ -22,9 +25,11 @@ All bundled files are precompiled as Lua.]])
 end
 
 local aprefixes, prefixes = arg[2], {}
-for p in string.gmatch(aprefixes, "([^:]*)") do
+for p in string.gmatch(aprefixes, "([^:]+)") do
    prefixes[#prefixes + 1] = p
 end
+table.sort(prefixes, function(a, b) return a > b end)
+print("Prefixes: " .. table.concat(prefixes, ":"))
 
 local files = {}
 table.move(arg, 3, #arg, 1, files)
